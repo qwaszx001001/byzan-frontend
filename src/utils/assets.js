@@ -1,0 +1,3 @@
+// For Vite: files in public/image/ are served at /image/...
+export const getAssetUrl = (fileName) => `/image/${fileName}`
+

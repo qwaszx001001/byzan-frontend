@@ -1,0 +1,109 @@
+@import "tailwindcss";
+
+@theme {
+  /* Colors */
+  --color-primary: #009444;
+  --color-dark: #121212;
+  --color-light: #f6f6f6;
+  --color-text: #000000;
+  --color-white: #ffffff;
+  --bg-dark: #0d1b17;
+  --text-light: #f0f7f4;
+  --primary-green: #009444;
+  --black: #000000;
+  --light-gray: #d9d9d9;
+  --text-gray: #808080;
+
+  /* Font families */
+  --font-family-montserrat: "Montserrat", sans-serif;
+  --font-family-comfortaa: "Comfortaa", sans-serif;
+  --font-family-comic-neue: "Comic Neue", cursive;
+  --font-family-shadows-into-light: "Shadows Into Light", cursive;
+}
+
+/* Custom font classes */
+.font-montserrat {
+  font-family: "Montserrat", sans-serif !important;
+}
+.font-comfortaa {
+  font-family: "Comfortaa", sans-serif !important;
+}
+.font-comic-neue {
+  font-family: "Comic Neue", cursive !important;
+}
+.font-shadows-into-light {
+  font-family: "Shadows Into Light", cursive !important;
+}
+
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Montserrat", sans-serif;
+  margin: 0;
+  background-color: #f6f6f6;
+  color: #000000;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p {
+  margin: 0;
+}
+
+#app {
+  min-height: 100vh;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 20px;
+  border-radius: 5px;
+  font-weight: 600;
+  font-size: 18px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+  font-family: "Montserrat", sans-serif;
+}
+
+.btn-primary {
+  background-color: var(--color-primary);
+  color: var(--color-white);
+}
+
+.btn-primary:hover {
+  opacity: 0.9;
+}
+
+.btn-secondary {
+  background-color: var(--color-white);
+  color: var(--color-text);
+}
+
+.btn-secondary:hover {
+  background-color: #f0f0f0;
+}
+
+.btn-light {
+  background-color: var(--color-white);
+  color: var(--color-text);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}

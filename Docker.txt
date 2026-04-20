@@ -1,0 +1,21 @@
+Build image:
+- docker build -t bzyan-frontend:latest .
+
+Run container (port 3000):
+- docker run -d --name bzyan-frontend --restart unless-stopped -p 3000:3000 bzyan-frontend:latest
+
+Stop / remove:
+- docker stop bzyan-frontend
+- docker rm bzyan-frontend
+
+Update (rebuild + replace):
+- docker build -t bzyan-frontend:latest .
+- docker rm -f bzyan-frontend
+- docker run -d --name bzyan-frontend --restart unless-stopped -p 3000:3000 bzyan-frontend:latest
+
+View logs:
+- docker logs bzyan-frontend
+- docker logs -f --tail 200 bzyan-frontend
+
+Check status:
+- docker ps --filter "name=byzan-frontend"
