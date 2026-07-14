@@ -140,14 +140,14 @@ const updateItemsPerPage = (newItemsPerPage) => {
 </script>
 
 <template>
-  <div class="w-full max-w-full mx-auto relative bg-white  overflow-y-visible">
+  <div class="w-full max-w-full mx-auto relative bg-white overflow-x-hidden overflow-y-visible">
 <AppHeader :is-authenticated="isAuthenticated" :user="auth.user" @logout="logout" />
 
     <section class="pt-10 relative " id="hero">
       <!-- Background Images with proper layering -->
 
-      <div class="absolute top-10 right-0 w-[800px] h-[800px] pointer-events-none gradient-blob-1"></div>
-      <div class="absolute top-[250px] right-[100px] w-[700px] h-[700px] pointer-events-none gradient-blob-2 animate-sway"></div>
+      <div class="absolute top-10 right-0 w-[400px] h-[400px] md:w-[800px] md:h-[800px] pointer-events-none gradient-blob-1"></div>
+      <div class="absolute top-[250px] right-[100px] w-[350px] h-[350px] md:w-[700px] md:h-[700px] pointer-events-none gradient-blob-2 animate-sway"></div>
       <img :src="paperPlaneSrc" alt="paper plane" class="absolute bottom-0 right-[40%] w-[100px] h-auto object-cover object-center z-1 scale-x-[-1] animate-float-slow rotate-12 animate-float"/>
       <img 
         :src="backgroundBgSrc" 
@@ -159,7 +159,7 @@ const updateItemsPerPage = (newItemsPerPage) => {
       <img 
         :src="backgroundGradientSrc" 
         alt="background gradient" 
-        class="absolute top-0 left-0 pointer-events-none select-none z-0 opacity-100 animate-gradient-pulse"
+        class="absolute top-0 left-0 pointer-events-none select-none z-0 opacity-100 animate-gradient-pulse max-w-none"
         style="width: 2882px; height: 1922px; transform: translate(-834px, -198px);"
         @error="console.error('Failed to load gradient image:', backgroundGradientSrc)"
       />
@@ -212,14 +212,14 @@ const updateItemsPerPage = (newItemsPerPage) => {
           </button>
         </div>
 
-      <div class="w-fit flex flex-wrap gap-5 z-3 mx-4 md:mx-10 lg:mx-20 py-10 relative md:border-b-4  border-gray-200">
+      <div class="w-full md:w-fit flex flex-wrap gap-5 z-3 mx-4 md:mx-10 lg:mx-20 py-10 relative md:border-b-4  border-gray-200">
         <RouterLink
           v-for="course in topHeroCourses"
           :key="`hero-${course.id}`"
           :to="`/course/${course.id}`"
           class="w-full md:w-[200px] bg-gray-100 rounded-[18.3px] backdrop-blur-[10px] shadow-[4.2px_3.5px_9px_0px_rgba(0,0,0,0.05)] text-center p-[9px] flex flex-col items-center"
         >
-          <div class="w-[182px] h-[114px] rounded-[18.3px] overflow-hidden shadow-[inset_1.7px_1.4px_1.4px_0px_rgba(255,255,255,0.25)]">
+          <div class="w-full md:w-[182px] h-[114px] rounded-[18.3px] overflow-hidden shadow-[inset_1.7px_1.4px_1.4px_0px_rgba(255,255,255,0.25)]">
             <img v-if="course.thumbnail" :src="course.thumbnail" :alt="course.title" class="w-full h-full object-cover" />
             <div v-else class="w-full h-full bg-gray-200"></div>
           </div>
@@ -230,7 +230,7 @@ const updateItemsPerPage = (newItemsPerPage) => {
     </section>
 <section class="relative lg:min-h-screen flex gap-10 overflow-visible pt-20" id="about">
     <img :src="aboutLinesSrc" alt="background lines" class=" absolute -top-[15%] w-[125%] right-[17%] z-1 object-cover object-center animate-drift" >
-    <img :src="aboutGradientSrc" alt="background gradient" class="absolute z-0 block min-w-full min-h-full object-cover object-center animate-gradient-pulse" style="width: 2882px; height: 1922px; top: -242px; right: 0; transform: rotate(180deg);">
+    <img :src="aboutGradientSrc" alt="background gradient" class="absolute z-0 block min-w-full min-h-full object-cover object-center animate-gradient-pulse max-w-none" style="width: 2882px; height: 1922px; top: -242px; right: 0; transform: rotate(180deg);">
 
     
     <div class="z-1 w-0 md:w-[10%] lg:w-[20%] h-full">
@@ -260,31 +260,72 @@ const updateItemsPerPage = (newItemsPerPage) => {
       <div class="mb-[60px]">
         <h3 class="text-xl font-bold text-black font-montserrat">Kursus populer</h3>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pt-6">
-          <CourseCard
-            v-for="course in popularCourses"
-            :key="`popular-${course.id}`"
-            :course="course"
-            :formatPrice="formatPrice"
-          />
+          <template v-if="loadingCourses">
+            <div
+              v-for="n in 8"
+              :key="`popular-skel-${n}`"
+              class="rounded-2xl overflow-hidden bg-white shadow-sm border border-gray-100"
+            >
+              <div class="w-full aspect-video shimmer"></div>
+              <div class="p-4">
+                <div class="h-4 w-3/4 rounded-md shimmer"></div>
+                <div class="h-3 w-1/2 rounded-md shimmer mt-3"></div>
+                <div class="flex items-center justify-between mt-4">
+                  <div class="h-4 w-1/3 rounded-md shimmer"></div>
+                  <div class="h-8 w-8 rounded-full shimmer"></div>
+                </div>
+              </div>
+            </div>
+          </template>
+          <template v-else>
+            <CourseCard
+              v-for="course in popularCourses"
+              :key="`popular-${course.id}`"
+              :course="course"
+              :formatPrice="formatPrice"
+            />
+          </template>
         </div>
       </div>
 
       <!-- All Courses -->
       <div class="mb-[60px]">
-        <h3 class="text-xl font-bold text-black font-montserrat mb-6">Semua Kursus ({{ courses.length }} kursus)</h3>
+        <h3 class="text-xl font-bold text-black font-montserrat mb-6">
+          Semua Kursus
+          <span v-if="!loadingCourses">({{ courses.length }} kursus)</span>
+        </h3>
         
         <!-- Courses Grid -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 py-6 mb-8">
-          <CourseCard
-            v-for="course in paginatedCourses"
-            :key="`all-${course.id}`"
-            :course="course"
-            :formatPrice="formatPrice"
-          />
+          <template v-if="loadingCourses">
+            <div
+              v-for="n in itemsPerPage"
+              :key="`all-skel-${n}`"
+              class="rounded-2xl overflow-hidden bg-white shadow-sm border border-gray-100"
+            >
+              <div class="w-full aspect-video shimmer"></div>
+              <div class="p-4">
+                <div class="h-4 w-3/4 rounded-md shimmer"></div>
+                <div class="h-3 w-1/2 rounded-md shimmer mt-3"></div>
+                <div class="flex items-center justify-between mt-4">
+                  <div class="h-4 w-1/3 rounded-md shimmer"></div>
+                  <div class="h-8 w-8 rounded-full shimmer"></div>
+                </div>
+              </div>
+            </div>
+          </template>
+          <template v-else>
+            <CourseCard
+              v-for="course in paginatedCourses"
+              :key="`all-${course.id}`"
+              :course="course"
+              :formatPrice="formatPrice"
+            />
+          </template>
         </div>
 
         <!-- Pagination -->
-        <div class="flex justify-center">
+        <div v-if="!loadingCourses" class="flex justify-center">
           <Pagination
             :currentPage="currentPage"
             :totalPages="totalPages"
@@ -348,6 +389,29 @@ const updateItemsPerPage = (newItemsPerPage) => {
   filter: blur(28px);
 }
 
+/* ===== Shimmer loading ===== */
+.shimmer {
+  position: relative;
+  overflow: hidden;
+  background-color: #e5e7eb;
+}
+.shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    rgba(229, 231, 235, 0) 0%,
+    rgba(255, 255, 255, 0.6) 50%,
+    rgba(229, 231, 235, 0) 100%
+  );
+  animation: shimmer 1.4s infinite;
+}
+@keyframes shimmer {
+  100% { transform: translateX(100%); }
+}
+
 /* Custom utilities not available in Tailwind */
 .scrollbar-none {
   scrollbar-width: none;
@@ -378,6 +442,16 @@ const updateItemsPerPage = (newItemsPerPage) => {
   align-items: center;
   z-index: 9999;
   padding: 20px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shimmer::after,
+  .animate-sway,
+  .animate-float,
+  .animate-drift,
+  .animate-gradient-pulse {
+    animation: none;
+  }
 }
 
 </style>

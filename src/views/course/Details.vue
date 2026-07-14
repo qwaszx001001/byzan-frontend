@@ -63,22 +63,18 @@ const videoThumbSrc = getAssetUrl('f72456441df4efd0eb5ecfda62f6b31c8d4550ef.png'
 const playButtonSrc = getAssetUrl('5ab5d018e020264bbf31917e0b26c52426cb4496.png')
 const characterSrc = getAssetUrl('f03fc1fe80df6a818fe525b8ffb90ced101f3d78.png')
 
-// Gunakan thumbnail course sebagai hero background bila tersedia
 const heroImageSrc = computed(() => {
   const c = course.value || {}
   return c.thumbnail_url || c.thumbnail || c.image || c.featured_image || heroBgSrc
 })
 
-// Normalize possible backticks/spaces from API example strings
 const normalizeVideoUrl = (u) => {
   if (!u || typeof u !== 'string') return u
   return u.replace(/`/g, '').trim()
 }
 
-// Current selected video src for preview
 const selectedVideoSrc = computed(() => normalizeVideoUrl(selectedEpisode.value?.video_url))
 
-// Extract YouTube ID from various URL forms
 const getYouTubeId = (url) => {
   if (!url) return null
   try {
@@ -107,7 +103,6 @@ const getYouTubeThumbnailUrl = (url) => {
   return `https://img.youtube.com/vi/${vid}/hqdefault.jpg`
 }
 
-// Up to 3 episodes with video_url for multi-preview (from dummy data)
 const previewEpisodes = computed(() => {
   const list = episodes.value || []
   const filtered = list.filter(e => !!normalizeVideoUrl(e.video_url))
@@ -126,7 +121,6 @@ const previewEpisodes = computed(() => {
   return []
 })
 
-// Prefer Episode 2: find by order_index=2, else fallback to second, else first
 const episodeTwo = computed(() => {
   const list = episodes.value || []
   let target = list.find(ep => (ep.order_index || ep.episode) === 2)
@@ -138,58 +132,6 @@ const previewChapters = computed(() => {
   const list = modules.value || []
   return list.slice(0, 3)
 })
-
-// onMounted(async () => {
-//   const courseId = route.params.id
-//   if (!courseId) {
-//     error.value = 'Course ID tidak ditemukan'
-//     return
-//   }
-
-//   try {
-//     loading.value = true
-//     const { data } = await api.get(`/course/course/${courseId}/`)
-//     course.value = data
-//     // Try determine enrollment/access state from course payload if backend provides flags
-//     isEnrolled.value = !!(data?.is_enrolled || data?.enrolled || data?.has_access || data?.user_enrolled)
-//     // Parse modules and lessons if present
-//     if (Array.isArray(data.modules)) {
-//       const sortedModules = [...data.modules].sort((a, b) => (a.order_index || 0) - (b.order_index || 0))
-//       modules.value = sortedModules
-//       const lessonsFlat = sortedModules.flatMap(m => (Array.isArray(m.lessons) ? m.lessons : []).map(l => ({
-//         ...l,
-//         module_id: m.id,
-//         module_title: m.title,
-//         video_url: normalizeVideoUrl(l.video_url),
-//       })))
-//       episodes.value = lessonsFlat
-//     }
-    
-//     // Fallbacks if modules not provided but videos/episodes exist
-//     if (episodes.value.length === 0) {
-//       if (data.videos || data.episodes) {
-//         episodes.value = Array.isArray(data.videos) ? data.videos : 
-//                         Array.isArray(data.episodes) ? data.episodes : []
-//       } else {
-//         // Minimal fallback sample
-//         episodes.value = [
-//           { id: 1, title: 'Iftitah - Bab Kalam', episode: '01' },
-//           { id: 2, title: 'Iftitah - Bab Kalam', episode: '02' },
-//           { id: 3, title: 'Iftitah - Bab Kalam', episode: '03' },
-//         ]
-//       }
-//     }
-
-//     // Set default selected episode for preview: prefer one with video_url
-//     selectedEpisode.value = episodes.value.find(e => !!normalizeVideoUrl(e.video_url))
-//       || (episodeTwo.value || episodes.value[0] || null)
-//   } catch (e) {
-//     error.value = e.response?.data?.message || e.message || 'Gagal memuat data course'
-//     console.error('Error loading course:', e)
-//   } finally {
-//     loading.value = false
-//   }
-// })
 
 const mapApiCourseDetails = (data) => {
   const priceValue = Number(data?.price ?? 0)
@@ -452,7 +394,6 @@ const goToLearning = (episode) => {
 }
 
 const playVideo = (episode) => {
-  // Preview inline if video_url available; else navigate to Learning
   if (episode?.video_url) {
     selectedEpisode.value = episode
   } else {
@@ -461,7 +402,6 @@ const playVideo = (episode) => {
 }
 
 const showInfo = () => {
-  // Handle info button click
   console.log('Show course info')
 }
 
@@ -482,7 +422,6 @@ const handleBuy = async () => {
     return
   }
   if (isEnrolled.value) {
-    // Already enrolled, no-op
     return
   }
   try {
@@ -537,7 +476,7 @@ const handleBuy = async () => {
 </script>
 
 <template>
-  <div class="w-full max-w-full mx-auto relative bg-white">
+  <div class="w-full max-w-full mx-auto relative bg-white overflow-x-hidden">
     <AppHeader :is-authenticated="isAuthenticated" :user="auth.user" @logout="logout" />
     <SuccessModal
       :show="showBuySuccess"
@@ -578,27 +517,38 @@ const handleBuy = async () => {
 
     <section id="hero" class="relative w-full h-screen flex flex-col justify-end items-start text-white overflow-hidden">
       <div class="absolute -top-[75px] left-0 w-full h-[calc(100%+75px)]">
-        <img :src="heroImageSrc" :alt="course?.title || 'Course background'" class="w-full h-full object-cover" />
-        <div class="absolute top-0 left-0 w-full h-1/4 bg-gradient-to-b from-black to-transparent"></div>
+        <div v-if="loading" class="absolute inset-0 shimmer-dark"></div>
+        <img v-else :src="heroImageSrc" :alt="course?.title || 'Course background'" class="w-full h-full object-cover" />
+        <div class="absolute top-0 left-0 w-full h-1/4 bg-gradient-to-b from-black/60 to-transparent"></div>
         <!-- Transparent Teal to Green Gradient Overlay -->
-        <div class="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-primary via-cyan-500/30 to-transparent"></div>
+        <div class="absolute bottom-0 left-0 w-full h-3/4 bg-gradient-to-t from-primary via-primary/40 to-transparent"></div>
+        <!-- Scrim tambahan supaya teks kiri-bawah tetap kebaca di atas gambar -->
+        <div class="absolute bottom-0 left-0 w-full h-full bg-gradient-to-r from-black/60 via-black/25 to-transparent"></div>
+        <!-- Vertical scrim bawah khusus area teks -->
+        <div class="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-black/50 to-transparent"></div>
       </div>
 
-      <div class="relative z-10 flex flex-col gap-4 py-12 justify-end px-8 md:px-20 lg:px-24">
-        <h1 class="font-['Montserrat'] text-xl md:text-3xl lg:text-5xl font-bold leading-tight mb-3">
+      <div v-if="loading" class="relative z-10 flex flex-col gap-4 py-12 justify-end px-8 md:px-20 lg:px-24 max-w-full md:max-w-[640px] lg:max-w-[720px]">
+        <div class="h-10 md:h-12 w-3/4 rounded-lg shimmer-light"></div>
+        <div class="h-5 w-1/2 rounded shimmer-light mt-2"></div>
+        <div class="flex gap-3 mt-4">
+          <div class="h-12 w-32 rounded-lg shimmer-light"></div>
+          <div class="h-12 w-12 rounded-lg shimmer-light"></div>
+          <div class="h-12 w-40 rounded-lg shimmer-light"></div>
+        </div>
+        <div class="h-4 w-full max-w-[420px] rounded shimmer-light mt-4"></div>
+        <div class="h-4 w-3/4 max-w-[380px] rounded shimmer-light mt-2"></div>
+      </div>
+      <div v-else class="relative z-10 flex flex-col gap-4 py-12 justify-end px-8 md:px-20 lg:px-24 max-w-full md:max-w-[640px] lg:max-w-[720px]">
+        <h1 class="font-['Montserrat'] text-3xl md:text-4xl lg:text-5xl font-bold leading-tight mb-1 md:mb-3 drop-shadow-[0_2px_10px_rgba(0,0,0,0.7)]">
           {{ course?.title || 'Kursus ilmu Jurumiyah' }}
         </h1>
-        <p class="font-['Montserrat'] text-sm md:text-md lg:text-xl font-medium mb-11">
+        <p class="font-['Montserrat'] text-sm md:text-md lg:text-xl font-medium mb-6 md:mb-11 drop-shadow-[0_1px_6px_rgba(0,0,0,0.6)]">
           {{ course?.subtitle || 'Dengan Metode Mesir' }} | {{ episodes.length || 0 }} Episode
         </p>
 
-        <div class="flex items-center gap-4">
-          <!-- <button class="flex items-center justify-center h-12 px-6 md:px-8 lg:px-12 bg-white/50 rounded-lg border-0 cursor-pointer transition-opacity duration-200 hover:opacity-80" 
-          @click="goToLearning(episodeTwo || episodes[0])"
-          >
-            <img :src="playIconSrc" alt="Play Icon" class="w-8" />
-          </button> -->
-           <RouterLink :to="`/course/${course?.id}/learning`" class="flex items-center justify-center h-12 px-6 md:px-8 lg:px-12 bg-white/50 rounded-lg border-0 cursor-pointer transition-opacity duration-200 hover:opacity-80" 
+        <div class="flex flex-wrap items-center gap-3 md:gap-4">
+           <RouterLink :to="`/course/${course?.id}/learning`" class="flex items-center justify-center h-12 px-6 md:px-8 lg:px-12 bg-white/50 rounded-lg border-0 cursor-pointer transition-opacity duration-200 hover:opacity-80"
           >
             <img :src="playIconSrc" alt="Play Icon" class="w-8" />
           </RouterLink>
@@ -621,17 +571,17 @@ const handleBuy = async () => {
       </div>
     </section>
 
-    <section id="playlist" class="relative py-10 pb-24 bg-black/20 backdrop-blur-sm overflow-hidden">
-      <div class="absolute top-0 left-0 w-full h-1/2 bg-gradient-to-t to-primary via-cyan-500/30 from-transparent"></div>
-      <div class="absolute top-0 left-1/2 transform -translate-x-1/2 w-[1808px] h-[713px] -z-10 pointer-events-none">
+    <section id="playlist" class="relative py-10 pb-24 overflow-hidden bg-gradient-to-b from-primary via-[#0a5c3f] to-[#062318]">
+      <div class="absolute top-0 left-0 w-full h-1/2 bg-gradient-to-b from-primary/60 to-transparent pointer-events-none"></div>
+      <div class="absolute top-0 left-1/2 transform -translate-x-1/2 w-[1808px] max-w-none h-[713px] -z-10 pointer-events-none">
         <img :src="playlistBgSrc" alt="Decorative background" class="w-full h-full object-contain" />
       </div>
 
-      <div class="mx-auto px-8 md:px-20 lg:px-24 relative z-10">
+      <div class="mx-auto px-6 md:px-20 lg:px-24 relative z-10">
         <!-- Inline Multi Video Preview (3 items) -->
-        <div class="grid grid-cols-3 gap-6 items-start mb-8" v-if="previewEpisodes.length > 0">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 items-start mb-8" v-if="!loading && previewEpisodes.length > 0">
           <div class="flex flex-col gap-2" v-for="ep in previewEpisodes" :key="ep.id">
-            <div class="relative h-[240px] w-full rounded-xl overflow-hidden bg-black">
+            <div class="relative aspect-video w-full rounded-xl overflow-hidden bg-black">
               <img :src="ep.thumbnail" :alt="ep.title || 'Video Preview'" class="w-full h-full object-cover block" loading="lazy" />
               <button
                 type="button"
@@ -642,7 +592,7 @@ const handleBuy = async () => {
               </button>
             </div>
             <div class="flex flex-col gap-2">
-              <h3 class="font-['Montserrat'] text-xl font-bold text-white m-0">{{ ep.title || 'Video Preview' }}</h3>
+              <h3 class="font-['Montserrat'] text-lg md:text-xl font-bold text-white m-0 line-clamp-2">{{ ep.title || 'Video Preview' }}</h3>
               <button class="bg-primary text-white border-0 rounded-lg px-4 py-2.5 cursor-pointer font-['Montserrat'] font-semibold w-fit disabled:opacity-60 disabled:cursor-not-allowed" @click="goToLearning(ep)">
                 Buka Belajar
               </button>
@@ -650,13 +600,13 @@ const handleBuy = async () => {
           </div>
         </div>
 
-        <div v-if="previewChapters.length" class="mb-10">
+        <div v-if="!loading && previewChapters.length" class="mb-10">
           <h3 class="font-['Montserrat'] text-xl md:text-2xl font-bold text-white m-0 mb-4">Bab</h3>
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             <div
               v-for="ch in previewChapters"
               :key="`chapter-${ch.id}`"
-              class="bg-black/20 rounded-xl backdrop-blur-sm shadow-[0px_3px_10px_rgba(255,255,255,0.12)] p-4 text-white"
+              class="bg-white/10 border border-white/15 rounded-xl backdrop-blur-md shadow-[0px_3px_12px_rgba(0,0,0,0.15)] p-4 text-white"
             >
               <p class="font-['Montserrat'] font-bold m-0 mb-2">{{ ch.title }}</p>
               <p class="font-['Montserrat'] text-sm opacity-90 m-0 mb-3">{{ (ch.lessons?.length || 0) }} Lesson</p>
@@ -664,7 +614,7 @@ const handleBuy = async () => {
                 <div
                   v-for="ls in (ch.lessons || []).slice(0, 3)"
                   :key="`lesson-${ch.id}-${ls.id}`"
-                  class="flex items-center justify-between gap-3 bg-white/10 rounded-lg px-3 py-2"
+                  class="flex items-center justify-between gap-3 bg-black/20 rounded-lg px-3 py-2"
                 >
                   <div class="flex items-center gap-3 min-w-0">
                     <img
@@ -684,24 +634,62 @@ const handleBuy = async () => {
           </div>
         </div>
 
-        <div v-if="loading" class="text-center py-10 text-white font-['Montserrat']">
-          <p>Memuat video...</p>
+        <!-- Loading skeleton (playlist) -->
+        <template v-if="loading">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 items-start mb-8">
+            <div v-for="n in 3" :key="`vid-skel-${n}`" class="flex flex-col gap-2">
+              <div class="aspect-video w-full rounded-xl shimmer-light"></div>
+              <div class="h-5 w-3/4 rounded shimmer-light mt-1"></div>
+              <div class="h-9 w-28 rounded-lg shimmer-light"></div>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-10">
+            <div v-for="n in 3" :key="`bab-skel-${n}`" class="bg-white/10 border border-white/15 rounded-xl p-4">
+              <div class="h-4 w-2/3 rounded shimmer-light"></div>
+              <div class="h-3 w-1/3 rounded shimmer-light mt-2"></div>
+              <div class="h-9 w-full rounded-lg shimmer-light mt-4"></div>
+              <div class="h-9 w-full rounded-lg shimmer-light mt-2"></div>
+            </div>
+          </div>
+          <div class="h-40 w-full rounded-2xl shimmer-light"></div>
+        </template>
+
+        <div v-if="error && !previewChapters.length && !previewEpisodes.length" class="mb-10">
+          <div class="mx-auto max-w-lg bg-white/10 border border-white/15 rounded-2xl backdrop-blur-md shadow-[0px_3px_12px_rgba(0,0,0,0.2)] px-6 py-8 text-center">
+            <div class="mx-auto mb-4 flex items-center justify-center w-14 h-14 rounded-full bg-white/15">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-7 h-7 text-white">
+                <path d="M12 9v4" /><path d="M12 17h.01" />
+                <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+              </svg>
+            </div>
+            <h4 class="font-['Montserrat'] text-lg font-bold text-white m-0 mb-1">Gagal memuat konten</h4>
+            <p class="font-['Montserrat'] text-sm text-white/80 m-0 mb-5 leading-relaxed">
+              Sepertinya ada gangguan koneksi ke server. Cek koneksi internetmu, lalu coba lagi.
+            </p>
+            <button
+              type="button"
+              class="inline-flex items-center gap-2 bg-white text-primary hover:bg-white/90 border-0 rounded-lg px-5 py-2.5 cursor-pointer font-['Montserrat'] font-semibold transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+              :disabled="loading"
+              @click="loadCourseDetails"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4" :class="loading ? 'animate-spin' : ''">
+                <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" /><path d="M21 3v5h-5" />
+                <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" /><path d="M8 16H3v5" />
+              </svg>
+              {{ loading ? 'Memuat...' : 'Coba Lagi' }}
+            </button>
+          </div>
         </div>
 
-        <div v-if="error" class="text-center py-10 text-red-400 font-['Montserrat']">
-          <p>{{ error }}</p>
-        </div>
-
-        <div class="relative pl-20 md:pl-24 lg:pl-0 lg:flex">
-          <div class="bg-black/20 rounded-t-[20px] rounded-br-[20px] backdrop-blur-sm shadow-[0px_3px_10px_rgba(255,255,255,0.25)] p-10 xl:p-8 max-w-full text-white font-['Comfortaa'] text-[23px] xl:text-xl leading-normal text-justify h-fit my-12">
+        <div v-if="!loading" class="relative flex flex-col-reverse lg:flex-row items-center lg:items-end gap-6 lg:gap-4">
+          <div class="bg-white/10 border border-white/15 rounded-t-[20px] rounded-br-[20px] backdrop-blur-md shadow-[0px_3px_12px_rgba(0,0,0,0.2)] p-6 md:p-10 lg:p-8 w-full lg:flex-1 text-white font-['Comfortaa'] text-base md:text-xl lg:text-lg xl:text-xl leading-relaxed text-justify h-fit my-6 lg:my-12">
             {{ course?.description }}
           </div>
 
-
-          <img :src="characterSrc" alt="3D character mascot" class="h-120 scale-x-[-1]" />
+          <img :src="characterSrc" alt="3D character mascot" class="w-44 md:w-56 lg:w-auto lg:h-120 scale-x-[-1] shrink-0" />
         </div>
 
-        <div class="mt-10 bg-black/20 rounded-[20px] backdrop-blur-sm shadow-[0px_3px_10px_rgba(255,255,255,0.25)] p-6 text-white">
+        <div v-if="!loading" class="mt-10 bg-white/10 border border-white/15 rounded-[20px] backdrop-blur-md shadow-[0px_3px_12px_rgba(0,0,0,0.2)] p-6 text-white">
           <h3 class="font-['Montserrat'] text-xl md:text-2xl font-bold m-0 mb-4">Rating</h3>
 
           <div v-if="!isAuthenticated" class="flex flex-col gap-3 mb-8">
@@ -741,10 +729,12 @@ const handleBuy = async () => {
             </div>
 
             <p v-if="reviewsLoading" class="m-0 font-['Montserrat'] text-sm opacity-90">Memuat rating...</p>
-            <p v-else-if="reviewsError" class="m-0 font-['Montserrat'] text-sm text-red-300 font-semibold">{{ reviewsError }}</p>
+            <div v-else-if="reviewsError" class="flex items-center gap-2 bg-red-500/15 border border-red-300/30 rounded-lg px-3 py-2">
+              <span class="text-red-200 text-sm font-['Montserrat']">{{ reviewsError }}</span>
+            </div>
             <div v-else class="flex flex-col gap-3">
               <div v-if="reviews.length === 0" class="font-['Montserrat'] text-sm opacity-90">Belum ada rating.</div>
-              <div v-for="r in reviews" :key="r.id" class="bg-white/10 rounded-lg p-4">
+              <div v-for="r in reviews" :key="r.id" class="bg-black/20 rounded-lg p-4">
                 <div class="flex items-center justify-between gap-3 mb-2">
                   <p class="m-0 font-['Montserrat'] font-bold text-sm">{{ formatUserName(r.user) }}</p>
                   <p class="m-0 font-['Montserrat'] text-xs opacity-80">{{ formatDateTime(r.updated_at || r.created_at) }}</p>
@@ -787,10 +777,12 @@ const handleBuy = async () => {
             </form>
 
             <p v-if="commentsLoading" class="m-0 font-['Montserrat'] text-sm opacity-90">Memuat komentar...</p>
-            <p v-else-if="commentsError" class="m-0 font-['Montserrat'] text-sm text-red-300 font-semibold">{{ commentsError }}</p>
+            <div v-else-if="commentsError" class="flex items-center gap-2 bg-red-500/15 border border-red-300/30 rounded-lg px-3 py-2">
+              <span class="text-red-200 text-sm font-['Montserrat']">{{ commentsError }}</span>
+            </div>
             <div v-else class="flex flex-col gap-3">
               <div v-if="comments.length === 0" class="font-['Montserrat'] text-sm opacity-90">Belum ada komentar.</div>
-              <div v-for="c in comments" :key="c.id" class="bg-white/10 rounded-lg p-4">
+              <div v-for="c in comments" :key="c.id" class="bg-black/20 rounded-lg p-4">
                 <div class="flex items-center justify-between gap-3 mb-2">
                   <p class="m-0 font-['Montserrat'] font-bold text-sm">{{ formatUserName(c.user) }}</p>
                   <p class="m-0 font-['Montserrat'] text-xs opacity-80">{{ formatDateTime(c.created_at) }}</p>
@@ -806,3 +798,37 @@ const handleBuy = async () => {
     <AppFooter :is-authenticated="isAuthenticated" :user="auth.user" @logout="logout" />
   </div>
 </template>
+
+<style scoped>
+.shimmer-dark {
+  position: relative;
+  overflow: hidden;
+  background-color: #0a5c3f;
+}
+.shimmer-dark::after,
+.shimmer-light::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  animation: shimmer 1.4s infinite;
+}
+.shimmer-dark::after {
+  background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0) 100%);
+}
+.shimmer-light {
+  position: relative;
+  overflow: hidden;
+  background-color: rgba(255,255,255,0.15);
+  border-radius: inherit;
+}
+.shimmer-light::after {
+  background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.35) 50%, rgba(255,255,255,0) 100%);
+}
+@keyframes shimmer { 100% { transform: translateX(100%); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .shimmer-dark::after,
+  .shimmer-light::after { animation: none; }
+}
+</style>

@@ -85,6 +85,13 @@ onMounted(() => {
             {{ verifying ? 'Memeriksa...' : 'Verifikasi' }}
           </button>
         </form>
+
+        <!-- Shimmer loading saat memverifikasi -->
+        <div v-if="verifying" class="result-skeleton">
+          <div class="sk-icon shimmer"></div>
+          <div class="sk-line shimmer"></div>
+          <div class="sk-line sk-line--sm shimmer"></div>
+        </div>
       </div>
     </main>
 
@@ -106,7 +113,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 40px 20px;
+  padding: 40px 16px;
 }
 .card {
   width: 100%;
@@ -119,9 +126,10 @@ onMounted(() => {
 .title {
   margin: 0 0 8px 0;
   font-family: 'Montserrat', sans-serif;
-  font-size: 28px;
+  font-size: 24px;
   font-weight: 800;
   color: #009444;
+  line-height: 1.2;
 }
 .subtitle {
   margin: 0 0 16px 0;
@@ -136,12 +144,18 @@ onMounted(() => {
 }
 .input {
   flex: 1;
+  min-width: 0;
   height: 44px;
   padding: 0 14px;
   border-radius: 10px;
   border: 1px solid #d9d9d9;
   font-family: 'Montserrat', sans-serif;
   font-size: 14px;
+}
+.input:focus {
+  outline: none;
+  border-color: #009444;
+  box-shadow: 0 0 0 3px rgba(0, 148, 68, 0.15);
 }
 .btn {
   height: 44px;
@@ -155,6 +169,7 @@ onMounted(() => {
   font-weight: 700;
   cursor: pointer;
   transition: opacity 0.2s;
+  white-space: nowrap;
 }
 .btn:hover:not(:disabled) {
   opacity: 0.9;
@@ -162,5 +177,62 @@ onMounted(() => {
 .btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+/* Mobile: input & tombol stack vertikal biar nggak sempit */
+/* ===== Shimmer loading ===== */
+.result-skeleton {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-top: 24px;
+}
+.sk-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+}
+.sk-line {
+  width: 80%;
+  height: 14px;
+  border-radius: 6px;
+}
+.sk-line--sm {
+  width: 55%;
+  height: 12px;
+}
+.shimmer {
+  position: relative;
+  overflow: hidden;
+  background-color: #e5e7eb;
+}
+.shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, rgba(229,231,235,0) 0%, rgba(255,255,255,0.6) 50%, rgba(229,231,235,0) 100%);
+  animation: shimmer 1.4s infinite;
+}
+@keyframes shimmer { 100% { transform: translateX(100%); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .shimmer::after { animation: none; }
+}
+
+@media (max-width: 480px) {
+  .card {
+    padding: 20px;
+  }
+  .title {
+    font-size: 22px;
+  }
+  .form {
+    flex-direction: column;
+  }
+  .btn {
+    width: 100%;
+  }
 }
 </style>

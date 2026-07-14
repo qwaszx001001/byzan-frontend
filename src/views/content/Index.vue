@@ -268,18 +268,28 @@ const updateItemsPerPage = (newItemsPerPage) => {
 
         <img :src="separatorSrc" alt="Separator" class="w-full max-w-full mt-4" />
 
-        <div class="relative mt-4 flex items-center justify-start h-[420px] md:h-[588px] ">
-          <img :src="sliderBgSrc" alt="Featured article background" class="absolute inset-0 w-full h-full object-cover -z-10" />
-          <div v-if="featuredArticle" class="mx-8 md:mx-12 lg:mx-24 bg-white/90 backdrop-blur-md shadow-lg w-100 md:w-[40%] p-3 md:p-5 rounded-lg text-left z-10">
-            <h2 class="text-xl md:text-2xl lg:text-4xl font-bold text-primary" v-html="featuredArticle.title || 'Featured Article'"></h2>
-            <img :src="sliderSeparatorSrc" alt="Separator" class="w-full my-4" />
-            <p class="text-sm md:text-base text-gray-700">{{ featuredArticle.excerpt || 'Article excerpt...' }}</p>
+        <div class="relative mt-4 mx-auto max-w-[1100px] rounded-2xl overflow-hidden shadow-lg flex items-center justify-start h-[340px] md:h-[460px]">
+          <div v-if="loading" class="absolute inset-0 shimmer"></div>
+          <img v-else :src="sliderBgSrc" alt="Featured article background" class="absolute inset-0 w-full h-full object-cover" />
+          <!-- Gradient scrim biar teks card kebaca & gambar lebih berdimensi -->
+          <div class="absolute inset-0 bg-gradient-to-r from-black/50 via-black/10 to-transparent pointer-events-none"></div>
+          <div v-if="loading" class="mx-8 md:mx-12 lg:mx-16 bg-white/90 backdrop-blur-md shadow-lg w-[85%] md:w-[45%] p-4 md:p-6 rounded-xl text-left z-10">
+            <div class="h-7 md:h-9 w-3/4 rounded shimmer"></div>
+            <div class="h-1 w-full my-4 rounded shimmer"></div>
+            <div class="h-4 w-full rounded shimmer"></div>
+            <div class="h-4 w-5/6 rounded shimmer mt-2"></div>
+            <div class="h-4 w-2/3 rounded shimmer mt-2"></div>
           </div>
-          <button class="cursor-pointer absolute z-2 left-0 md:left-3 top-1/2 -translate-y-1/2 rotate-180 w-12 md:w-16 h-12 md:h-16 rounded-full flex items-center justify-center shadow" type="button" aria-label="Previous">
-            <img :src="sliderArrowSrc" alt="Previous" class="w-8 md:w-12" />
+          <div v-else-if="featuredArticle" class="mx-8 md:mx-12 lg:mx-16 bg-white/90 backdrop-blur-md shadow-lg w-[85%] md:w-[45%] p-4 md:p-6 rounded-xl text-left z-10">
+            <h2 class="text-xl md:text-2xl lg:text-3xl font-bold text-primary line-clamp-3" v-html="featuredArticle.title || 'Featured Article'"></h2>
+            <img :src="sliderSeparatorSrc" alt="Separator" class="w-full my-4" />
+            <p class="text-sm md:text-base text-gray-700 line-clamp-3">{{ featuredArticle.excerpt || 'Article excerpt...' }}</p>
+          </div>
+          <button class="cursor-pointer absolute z-20 left-3 md:left-5 top-1/2 -translate-y-1/2 rotate-180 w-11 md:w-14 h-11 md:h-14 rounded-full bg-white/80 hover:bg-white flex items-center justify-center shadow-md transition-colors" type="button" aria-label="Previous">
+            <img :src="sliderArrowSrc" alt="Previous" class="w-6 md:w-8" />
           </button>
-          <button class="cursor-pointer absolute right-0 md:right-3 top-1/2 -translate-y-1/2 w-12 md:w-16 h-12 md:h-16 rounded-full flex items-center justify-center shadow" type="button" aria-label="Next">
-            <img :src="sliderArrowSrc" alt="Next" class="w-8 md:w-12" />
+          <button class="cursor-pointer absolute z-20 right-3 md:right-5 top-1/2 -translate-y-1/2 w-11 md:w-14 h-11 md:h-14 rounded-full bg-white/80 hover:bg-white flex items-center justify-center shadow-md transition-colors" type="button" aria-label="Next">
+            <img :src="sliderArrowSrc" alt="Next" class="w-6 md:w-8" />
           </button>
         </div>
       </div>
@@ -294,8 +304,24 @@ const updateItemsPerPage = (newItemsPerPage) => {
         </div>
 
         <div class="mb-6">
+          <!-- Loading skeleton -->
+          <div v-if="loading" class="grid gap-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 mb-8">
+            <div v-for="n in itemsPerPage" :key="`art-skel-${n}`" class="rounded-2xl overflow-hidden bg-white border border-gray-200">
+              <div class="h-52 shimmer"></div>
+              <div class="p-5">
+                <div class="h-5 w-3/4 rounded shimmer"></div>
+                <div class="h-3 w-full rounded shimmer mt-3"></div>
+                <div class="h-3 w-2/3 rounded shimmer mt-2"></div>
+              </div>
+              <div class="px-5 py-4 border-t border-gray-100 flex justify-between">
+                <div class="h-4 w-1/2 rounded shimmer"></div>
+                <div class="h-4 w-10 rounded shimmer"></div>
+              </div>
+            </div>
+          </div>
+
           <!-- Content Grid -->
-          <div class="grid gap-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 mb-8">
+          <div v-else class="grid gap-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 mb-8">
             <CardArticle
               v-for="content in paginatedContent"
               :key="`${content.contentType}-${content.id}`"
@@ -311,7 +337,7 @@ const updateItemsPerPage = (newItemsPerPage) => {
           </div>
 
           <!-- Pagination -->
-          <div class="flex justify-center mb-8">
+          <div v-if="!loading && totalPages > 1" class="flex justify-center mb-8">
             <Pagination
               :currentPage="currentPage"
               :totalPages="totalPages"
@@ -328,3 +354,24 @@ const updateItemsPerPage = (newItemsPerPage) => {
     <AppFooter :is-authenticated="isAuthenticated" :user="auth.user" @logout="logout" />
   </div>
 </template>
+
+<style scoped>
+.shimmer {
+  position: relative;
+  overflow: hidden;
+  background-color: #e5e7eb;
+}
+.shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, rgba(229,231,235,0) 0%, rgba(255,255,255,0.6) 50%, rgba(229,231,235,0) 100%);
+  animation: shimmer 1.4s infinite;
+}
+@keyframes shimmer { 100% { transform: translateX(100%); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .shimmer::after { animation: none; }
+}
+</style>
