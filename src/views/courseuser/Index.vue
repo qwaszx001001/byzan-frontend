@@ -49,15 +49,6 @@ const normalizeMediaUrl = (url) => {
   return path.startsWith('/') ? `${API_ORIGIN}${path}` : `${API_ORIGIN}/${path}`
 }
 
-const formatPrice = (price) => {
-  if (!price) return 'Gratis'
-  return new Intl.NumberFormat('id-ID', {
-    style: 'currency',
-    currency: 'IDR',
-    minimumFractionDigits: 0,
-  }).format(price)
-}
-
 onMounted(async () => {
   try {
     loading.value = true
@@ -122,68 +113,6 @@ const continueCourse = (course) => {
   } else {
     goToLearning(course.id)
   }
-}
-
-const buildDummyCertificateSvg = ({ fullName, courseTitle, issuedAt, code, verifyUrl }) => {
-  const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
-  const title = esc(courseTitle || 'Course')
-  const name = esc(fullName || 'Student')
-  const date = esc(issuedAt || '')
-  const c = esc(code || '')
-  const v = esc(verifyUrl || '')
-  const primary = '#009444'
-  const light = '#64fb5f'
-
-  return `<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="990" viewBox="0 0 1400 990">
-  <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#f7fff9"/>
-      <stop offset="1" stop-color="#ffffff"/>
-    </linearGradient>
-    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0" stop-color="${primary}"/>
-      <stop offset="1" stop-color="${light}"/>
-    </linearGradient>
-    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="10" stdDeviation="18" flood-color="#000000" flood-opacity="0.15"/>
-    </filter>
-  </defs>
-
-  <rect x="0" y="0" width="1400" height="990" fill="url(#bg)"/>
-  <rect x="90" y="90" width="1220" height="810" rx="26" fill="#ffffff" filter="url(#shadow)"/>
-  <rect x="90" y="90" width="1220" height="12" fill="url(#accent)"/>
-  <rect x="90" y="888" width="1220" height="12" fill="url(#accent)"/>
-
-  <g font-family="Montserrat, Arial, sans-serif" text-anchor="middle">
-    <text x="700" y="220" font-size="44" font-weight="800" fill="${primary}">CERTIFICATE</text>
-    <text x="700" y="265" font-size="18" font-weight="700" fill="#666666">OF COMPLETION</text>
-
-    <text x="700" y="360" font-size="18" font-weight="700" fill="#808080">This is to certify that</text>
-    <text x="700" y="430" font-size="54" font-weight="900" fill="#000000">${name}</text>
-    <rect x="360" y="450" width="680" height="2" fill="#e6e6e6"/>
-
-    <text x="700" y="520" font-size="18" font-weight="700" fill="#808080">has successfully completed the course</text>
-    <text x="700" y="580" font-size="34" font-weight="800" fill="#000000">${title}</text>
-
-    <g font-size="14" font-weight="700" fill="#666666">
-      <text x="330" y="725" text-anchor="start">Issued: ${date}</text>
-      <text x="330" y="755" text-anchor="start">Code: ${c}</text>
-      <text x="330" y="785" text-anchor="start">Verify: ${v}</text>
-    </g>
-
-    <g>
-      <circle cx="1080" cy="740" r="70" fill="none" stroke="${primary}" stroke-width="6"/>
-      <circle cx="1080" cy="740" r="56" fill="none" stroke="${light}" stroke-width="6" opacity="0.9"/>
-      <text x="1080" y="748" font-size="18" font-weight="900" fill="${primary}">BYZAN</text>
-    </g>
-
-    <g font-size="16" font-weight="800" fill="#000000">
-      <text x="980" y="840" text-anchor="start">Authorized Signature</text>
-      <rect x="980" y="850" width="300" height="2" fill="#111111"/>
-    </g>
-  </g>
-</svg>`
 }
 
 const downloadBlobAsFile = (blob, filename) => {
@@ -340,22 +269,7 @@ const downloadCertificate = async (course) => {
       return
     }
 
-    const now = new Date()
-    const issuedAt = now.toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })
-    const dummyCode = `DUMMY-${course.id}-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`
-    const verifyUrl = `${window.location.origin}/certificates/verify/${encodeURIComponent(dummyCode)}`
-    const fullName = auth.user?.full_name || `${auth.user?.first_name || ''} ${auth.user?.last_name || ''}`.trim() || auth.user?.username || auth.user?.email || 'Student'
-    const svg = buildDummyCertificateSvg({
-      fullName,
-      courseTitle: course.title,
-      issuedAt,
-      code: dummyCode,
-      verifyUrl,
-    })
-    const dummyBlob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' })
-    downloadBlobAsFile(dummyBlob, `certificate-${course.id}.svg`)
-    certSuccessMessage.value = 'Sertifikat dummy berhasil diunduh (SVG).'
-    showCertSuccess.value = true
+    throw new Error('Respons sertifikat tidak valid dari server')
   } catch (e) {
     const resData = e.response?.data
     if (resData && typeof resData === 'object') {
@@ -366,22 +280,7 @@ const downloadCertificate = async (course) => {
     } else {
       certErrorMessage.value = e.response?.data?.message || e.response?.data?.error || e.message || 'Gagal mengambil sertifikat'
     }
-    const now = new Date()
-    const issuedAt = now.toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })
-    const dummyCode = `DUMMY-${course.id}-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`
-    const verifyUrl = `${window.location.origin}/certificates/verify/${encodeURIComponent(dummyCode)}`
-    const fullName = auth.user?.full_name || `${auth.user?.first_name || ''} ${auth.user?.last_name || ''}`.trim() || auth.user?.username || auth.user?.email || 'Student'
-    const svg = buildDummyCertificateSvg({
-      fullName,
-      courseTitle: course.title,
-      issuedAt,
-      code: dummyCode,
-      verifyUrl,
-    })
-    const dummyBlob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' })
-    downloadBlobAsFile(dummyBlob, `certificate-${course.id}.svg`)
-    certSuccessMessage.value = 'Gagal mengambil sertifikat dari API. Sertifikat dummy berhasil diunduh (SVG).'
-    showCertSuccess.value = true
+    showCertError.value = true
   } finally {
     downloadingCourseId.value = null
   }

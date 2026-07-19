@@ -8,7 +8,6 @@ import { getAssetUrl } from '../../utils/assets'
 import SuccessModal from '../../components/SuccessModal.vue'
 import ErrorModal from '../../components/ErrorModal.vue'
 import api from '../../services/api'
-import { dummyCourses } from '../../data/dummyCourses.js'
 
 const route = useRoute()
 const router = useRouter()
@@ -72,8 +71,6 @@ const normalizeVideoUrl = (u) => {
   if (!u || typeof u !== 'string') return u
   return u.replace(/`/g, '').trim()
 }
-
-const selectedVideoSrc = computed(() => normalizeVideoUrl(selectedEpisode.value?.video_url))
 
 const getYouTubeId = (url) => {
   if (!url) return null
@@ -352,24 +349,11 @@ const loadCourseDetails = async () => {
     await fetchReviews()
   } catch (e) {
     error.value = e.response?.data?.message || e.message || 'Gagal memuat data course'
-    const fallback = dummyCourses.find((c) => c.id === Number(courseId)) || dummyCourses[0] || null
-    if (fallback) {
-      course.value = fallback
-      isEnrolled.value = Boolean(fallback?.is_enrolled)
-      if (Array.isArray(fallback?.modules)) {
-        const sortedModules = [...fallback.modules].sort((a, b) => (a.order_index || 0) - (b.order_index || 0))
-        modules.value = sortedModules
-        const lessonsFlat = sortedModules.flatMap((m) => (Array.isArray(m.lessons) ? m.lessons : []).map((l) => ({
-          ...l,
-          module_id: m.id,
-          module_title: m.title,
-          video_url: normalizeVideoUrl(l.video_url),
-        })))
-        episodes.value = lessonsFlat
-        selectedEpisode.value = episodes.value.find((ep) => !!normalizeVideoUrl(ep.video_url))
-          || (episodeTwo.value || episodes.value[0] || null)
-      }
-    }
+    course.value = null
+    isEnrolled.value = false
+    modules.value = []
+    episodes.value = []
+    selectedEpisode.value = null
   } finally {
     loading.value = false
   }
@@ -390,14 +374,6 @@ const goToLearning = (episode) => {
     router.push({ name: 'courseuser-learning', params: { courseId: cid }, query })
   } catch (e) {
     console.warn('Failed to navigate to learning:', e)
-  }
-}
-
-const playVideo = (episode) => {
-  if (episode?.video_url) {
-    selectedEpisode.value = episode
-  } else {
-    goToLearning(episode)
   }
 }
 

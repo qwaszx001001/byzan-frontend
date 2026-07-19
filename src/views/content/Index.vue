@@ -43,7 +43,6 @@ const sliderBgSrc = getAssetUrl('f41da2f037ead28fdc9275891ada165102d6b7c0.png')
 const sliderSeparatorSrc = getAssetUrl('320_110.svg')
 const sliderArrowSrc = getAssetUrl('92cf44ce2f6d38054670790ecb1f964b5e1c121d.png')
 const articlesBgSrc = getAssetUrl('1fc0d4fdf08dabc7e59b35987474afc4af53522b.png')
-const starIconSrc = getAssetUrl('ae82f0fc275cc9614de9be18a7b57f7d24b16b0d.png')
 
 const API_ORIGIN = (() => {
   try {
@@ -58,19 +57,6 @@ const normalizeMediaUrl = (url) => {
   const path = String(url)
   return path.startsWith('/') ? `${API_ORIGIN}${path}` : `${API_ORIGIN}/${path}`
 }
-
-// Sample article images
-const articleImages = [
-  getAssetUrl('ceca47a6478f603899f5b57003f9cb7368598bdd.png'),
-  getAssetUrl('47bd4e96a9df80ad012c840c37d54dfb2bd7c046.png'),
-  getAssetUrl('1eb5de3a3867ea93bd81861d06ccae3d18edf967.png'),
-  getAssetUrl('daeb9afe8aebd8556996bfa0833246d5028a91c4.png'),
-  getAssetUrl('fae23bb4188728f84d6eb8c1388ad51a8488ffac.png'),
-  getAssetUrl('6ae8f60de6196d73aa8e6441c6e3a837b224c3f5.png'),
-  getAssetUrl('e4a0fde3a8b6832804f26c192f6ec0fa5b9fdde0.png'),
-  getAssetUrl('dc8c70d864fbc639c57ce585213f123e7eb6c25c.jpeg'),
-  getAssetUrl('a28b322c5ab02c6290e1d019613d5afc85daf328.png'),
-]
 
 onMounted(async () => {
   try {
@@ -101,7 +87,7 @@ const toDisplayDate = (iso) => {
   return d.toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })
 }
 
-const mapPostToCard = (p, index) => ({
+const mapPostToCard = (p) => ({
   id: p?.id,
   title: p?.title || '',
   excerpt: p?.excerpt || '',
@@ -110,8 +96,7 @@ const mapPostToCard = (p, index) => ({
   category: p?.category || null,
   date: toDisplayDate(p?.published_at || p?.created_at),
   comments: p?.comments_count || 0,
-  rating: p?.rating || 4.8,
-  imageIndex: index % articleImages.length,
+  rating: p?.rating ?? p?.rating_avg ?? null,
   contentType: 'post',
   slug: p?.slug || null,
 })
@@ -161,10 +146,6 @@ const categoriesMapById = computed(() => {
   return map
 })
 
-const getCategorySlugById = (id) => {
-  return categoriesMapById.value[id]?.slug || ''
-}
-
 const displayCategoryName = (category) => {
   if (category && typeof category === 'object') {
     return category.name || 'Article'
@@ -176,7 +157,6 @@ const displayCategoryName = (category) => {
 }
 
 const filteredArticles = computed(() => articles.value)
-const filteredPosts = computed(() => [])
 
 const getCategoryColor = (category) => {
   let value = category
@@ -270,7 +250,12 @@ const updateItemsPerPage = (newItemsPerPage) => {
 
         <div class="relative mt-4 mx-auto max-w-[1100px] rounded-2xl overflow-hidden shadow-lg flex items-center justify-start h-[340px] md:h-[460px]">
           <div v-if="loading" class="absolute inset-0 shimmer"></div>
-          <img v-else :src="sliderBgSrc" alt="Featured article background" class="absolute inset-0 w-full h-full object-cover" />
+          <img
+            v-else
+            :src="featuredArticle?.thumbnail || sliderBgSrc"
+            alt="Featured article background"
+            class="absolute inset-0 w-full h-full object-cover"
+          />
           <!-- Gradient scrim biar teks card kebaca & gambar lebih berdimensi -->
           <div class="absolute inset-0 bg-gradient-to-r from-black/50 via-black/10 to-transparent pointer-events-none"></div>
           <div v-if="loading" class="mx-8 md:mx-12 lg:mx-16 bg-white/90 backdrop-blur-md shadow-lg w-[85%] md:w-[45%] p-4 md:p-6 rounded-xl text-left z-10">
@@ -326,7 +311,6 @@ const updateItemsPerPage = (newItemsPerPage) => {
               v-for="content in paginatedContent"
               :key="`${content.contentType}-${content.id}`"
               :article="content"
-              :article-images="articleImages"
               :display-category-name="displayCategoryName"
               :get-category-color="getCategoryColor"
               :is-post="content.contentType === 'post'"

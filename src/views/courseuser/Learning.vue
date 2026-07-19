@@ -6,7 +6,6 @@ import AppHeader from '../../components/AppHeader.vue'
 import AppFooter from '../../components/AppFooter.vue'
 import { getAssetUrl } from '../../utils/assets'
 import api from '../../services/api'
-import { dummyCourses } from '../../data/dummyCourses.js'
 import SuccessModal from '../../components/SuccessModal.vue'
 import ErrorModal from '../../components/ErrorModal.vue'
 
@@ -43,31 +42,12 @@ const showAskError = ref(false)
 const askSuccessMessage = ref('')
 const askErrorMessage = ref('')
 
-const dummyRecommendedCourses = [
-  {
-    id: 2,
-    title: "Kursus Nahwu",
-    image: null,
-    thumbnail: null,
-    featured_image: null
-  },
-  {
-    id: 3,
-    title: "Kurusus Mantiq",
-    image: null,
-    thumbnail: null,
-    featured_image: null
-  }
-]
-
 // Asset URLs
 const videoThumbnailSrc = getAssetUrl('8de126a496aa3535b193b674681ac3ff0368a390.png')
-const videoControlsSrc = getAssetUrl('8ad04e2f52531bfc929daeb6f0c3501eef56302e.png')
 const instructorAvatarSrc = getAssetUrl('28f5b8e9d2c7d6c0b8900264c40a99813e027bab.png')
 const starIconSrc = getAssetUrl('ae82f0fc275cc9614de9be18a7b57f7d24b16b0d.png')
 const checkedIconSrc = getAssetUrl('016b68354b9cc166fe7e60d6e02b4f4b4d6fccf3.png')
 const recommendedCourse1Src = getAssetUrl('f72456441df4efd0eb5ecfda62f6b31c8d4550ef.png')
-const recommendedCourse2Src = getAssetUrl('8b82b59be50686891c798f549c89a0972e85b15e.png')
 
 // Durasi pelajaran dalam API berupa menit, format label sederhana
 const formatLessonDuration = (minutes) => {
@@ -133,15 +113,13 @@ const thumbnailSrc = computed(() => {
 
 // Rekomendasi kursus opsional
 
-const loadCourseData = async (courseId, lessonId, moduleId) => {
+const loadCourseData = async (courseId) => {
   try {
     const { data: courseData } = await api.get(`/courses/${courseId}/`)
     return courseData || null
   } catch (e) {
-    console.warn('Failed to fetch course detail from API, using dummy data:', e)
-    // Gunakan data dummy jika API gagal - cari berdasarkan courseId
-    const dummyCourseData = dummyCourses.find(c => c.id === parseInt(courseId)) || dummyCourses[0]
-    return dummyCourseData
+    console.warn('Failed to fetch course detail from API:', e)
+    return null
   }
 }
 
@@ -153,9 +131,8 @@ const loadRecommendedCourses = async (courseId) => {
       .filter(c => c.id !== parseInt(courseId))
       .slice(0, 2)
   } catch (e) {
-    console.warn('Failed to fetch recommended courses from API, using dummy data:', e)
-    // Gunakan data dummy jika API gagal
-    return dummyRecommendedCourses
+    console.warn('Failed to fetch recommended courses from API:', e)
+    return []
   }
 }
 
@@ -288,7 +265,15 @@ onMounted(async () => {
     }
 
     if (courseId) {
-      const rawCourse = await loadCourseData(courseId, lessonId, moduleId)
+      const rawCourse = await loadCourseData(courseId)
+      if (!rawCourse) {
+        error.value = 'Gagal memuat detail kursus.'
+        course.value = null
+        modules.value = []
+        lessons.value = []
+        recommendedCourses.value = []
+        return
+      }
       course.value = mapCourseFromApi(rawCourse) || rawCourse
       const fallbackChapters = Array.isArray(rawCourse?.chapters) ? rawCourse.chapters : null
 
@@ -340,59 +325,23 @@ onMounted(async () => {
       }
       await fetchQuestions(currentLesson.value?.id)
 
-      // Load recommended courses (dengan fallback ke data dummy)
       recommendedCourses.value = await loadRecommendedCourses(courseId)
     } else {
-      // Jika tidak ada courseId, gunakan data dummy
-      console.warn('No courseId provided, using dummy data')
-      const dummyCourseData = dummyCourses[0]
-      course.value = dummyCourseData
-      modules.value = dummyCourseData.modules
-      
-      const flattened = []
-      for (const m of modules.value) {
-        const ml = Array.isArray(m.lessons) ? m.lessons : []
-        flattened.push(...ml.map(l => ({ ...l, module: m.id })))
-      }
-      flattened.sort((a, b) => (a.order_index || 0) - (b.order_index || 0))
-      lessons.value = flattened
-      
-      selectedModule.value = modules.value[0] || null
-      if (selectedModule.value) {
-        modulesById.value[selectedModule.value.id] = selectedModule.value
-        // Auto-open first module untuk dummy data
-        openModules.value.add(selectedModule.value.id)
-      }
-      currentLesson.value = lessons.value[0] || null
-      await fetchQuestions(currentLesson.value?.id)
-      recommendedCourses.value = dummyRecommendedCourses
+      error.value = 'Course ID tidak ditemukan.'
+      course.value = null
+      modules.value = []
+      lessons.value = []
+      currentLesson.value = null
+      recommendedCourses.value = []
     }
   } catch (e) {
     console.error('Error in onMounted:', e)
-    // Fallback terakhir ke data dummy jika semua gagal
-    const dummyCourseData = dummyCourses[0]
-    course.value = dummyCourseData
-    modules.value = dummyCourseData.modules
-    
-    const flattened = []
-    for (const m of modules.value) {
-      const ml = Array.isArray(m.lessons) ? m.lessons : []
-      flattened.push(...ml.map(l => ({ ...l, module: m.id })))
-    }
-    flattened.sort((a, b) => (a.order_index || 0) - (b.order_index || 0))
-    lessons.value = flattened
-    
-    selectedModule.value = modules.value[0] || null
-    if (selectedModule.value) {
-      modulesById.value[selectedModule.value.id] = selectedModule.value
-      // Auto-open first module untuk fallback data
-      openModules.value.add(selectedModule.value.id)
-    }
-    currentLesson.value = lessons.value[0] || null
-    await fetchQuestions(currentLesson.value?.id)
-    recommendedCourses.value = dummyRecommendedCourses
-    
-    error.value = null // Reset error karena kita sudah ada fallback data
+    error.value = e?.response?.data?.message || e.message || 'Gagal memuat course.'
+    course.value = null
+    modules.value = []
+    lessons.value = []
+    currentLesson.value = null
+    recommendedCourses.value = []
   } finally {
     loading.value = false
   }
@@ -586,29 +535,6 @@ const submitQuestion = async () => {
     asking.value = false
   }
 }
-
-const selectModule = async (module) => {
-  selectedModule.value = module
-  // Detail modul sudah tersedia dari course.modules
-  modulesById.value[module.id] = module
-  // If there are lessons for this module, select the first one
-  const firstLesson = lessons.value.find(l => (l.module === module.id) || (l.module?.id === module.id))
-  if (firstLesson) {
-    selectLesson(firstLesson)
-  }
-  // Update URL with selected moduleId
-  router.replace({
-    query: {
-      ...route.query,
-      moduleId: module.id,
-    },
-  })
-}
-
-const visibleLessons = computed(() => {
-  if (!selectedModule.value) return lessons.value
-  return lessons.value.filter(l => (l.module === selectedModule.value.id) || (l.module?.id === selectedModule.value.id))
-})
 
 // Sumber pemutaran video
 const playUrl = computed(() => currentLesson.value?.video_url || course.value?.video_url || null)

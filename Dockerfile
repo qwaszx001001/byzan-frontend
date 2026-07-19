@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7
 
-FROM node:20
+FROM node:20-alpine AS build
 WORKDIR /app
 
 COPY package.json package-lock.json ./
@@ -9,5 +9,8 @@ RUN npm ci
 COPY . .
 RUN npm run build
 
-EXPOSE 3000
-CMD ["npm", "run", "preview", "--", "--host", "0.0.0.0", "--port", "3000"]
+FROM caddy:2-alpine
+COPY Caddyfile /etc/caddy/Caddyfile
+COPY --from=build /app/dist /srv
+
+EXPOSE 80 443

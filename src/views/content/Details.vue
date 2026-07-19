@@ -54,22 +54,10 @@ const normalizeMediaUrl = (url) => {
 const categories = ref([]);
 
 // Asset URLs
-const heroImageSrc = getAssetUrl("daeb9afe8aebd8556996bfa0833246d5028a91c4.jpeg");
 const authorAvatarSrc = getAssetUrl("331_3.svg");
 const starIconSrc = getAssetUrl("ae82f0fc275cc9614de9be18a7b57f7d24b16b0d.png");
-const quoteIconSrc = getAssetUrl("2a6f6ff0084482b1a5764d9085c850e6e3603844.png");
 const shareIconSrc = getAssetUrl("302df890445600c802bb7578df1f7711f87104a0.png");
 const replyArrowSrc = getAssetUrl("c7c104945c9f6515191c5d535a892383f03d3f3c.png");
-const courseImageSrc = getAssetUrl("f72456441df4efd0eb5ecfda62f6b31c8d4550ef.png");
-const moreIconSrc = getAssetUrl("aee2435b15a9cce768a68b112f666ce2dce167d6.png");
-const postBgImageSrc = getAssetUrl("225af3722f1df4cd0f5e6f2971ee059fa2da3e75.png");
-
-// Related post images
-const relatedPostImages = [
-  { bg: postBgImageSrc, main: getAssetUrl("1eb5de3a3867ea93bd81861d06ccae3d18edf967.png") },
-  { bg: postBgImageSrc, main: getAssetUrl("fae23bb4188728f84d6eb8c1388ad51a8488ffac.png") },
-  { bg: postBgImageSrc, main: getAssetUrl("6ae8f60de6196d73aa8e6441c6e3a837b224c3f5.png") },
-];
 
 const toDisplayDate = (iso) => {
   if (!iso) return ""
@@ -361,10 +349,12 @@ const authorName = computed(() => {
           <!-- Featured image full-bleed within reading width -->
           <div class="max-w-[900px] mx-auto px-4 pb-2">
             <img
-              :src="article.thumbnail || article.featured_image || article.heroImage || article.image || heroImageSrc"
+              v-if="article.thumbnail || article.featured_image || article.heroImage || article.image"
+              :src="article.thumbnail || article.featured_image || article.heroImage || article.image"
               :alt="article.title"
               class="w-full aspect-[16/8] object-cover rounded-2xl shadow-sm"
             />
+            <div v-else class="w-full aspect-[16/8] rounded-2xl bg-gray-100"></div>
           </div>
         </header>
 
@@ -463,18 +453,6 @@ const authorName = computed(() => {
         <!-- ===== Rekomendasi (dipindah ke bawah, full width, clean) ===== -->
         <section class="bg-gray-50 border-t border-gray-100 py-14 md:py-16">
           <div class="max-w-[1200px] mx-auto px-4">
-            <!-- Course CTA banner -->
-            <div class="flex flex-col md:flex-row items-center gap-6 bg-white rounded-2xl border border-gray-200 shadow-sm p-5 md:p-6 mb-12">
-              <img :src="courseImageSrc" alt="Kursus Nahwu" class="w-full md:w-56 h-40 md:h-32 object-cover rounded-xl shrink-0" />
-              <div class="flex-1 text-center md:text-left">
-                <h3 class="font-bold text-xl md:text-2xl text-primary mb-1">Kursus Nahwu</h3>
-                <p class="text-gray-600 text-sm md:text-base">Pelajari tata bahasa Arab dari dasar — gratis untuk memulai.</p>
-              </div>
-              <router-link to="/byzanpost" class="inline-flex items-center justify-center bg-primary hover:opacity-90 text-white px-6 py-3 rounded-xl font-semibold transition-opacity whitespace-nowrap w-full md:w-auto">
-                Mulai Belajar
-              </router-link>
-            </div>
-
             <div v-if="relatedPosts.length" >
               <div class="flex items-center justify-between mb-6">
                 <h2 class="text-2xl font-bold text-gray-900">Artikel Terkait</h2>
@@ -485,7 +463,6 @@ const authorName = computed(() => {
                   v-for="post in relatedPosts"
                   :key="post.id"
                   :article="post"
-                  :article-images="relatedPostImages.map((i) => i.main || i.bg)"
                   :display-category-name="displayCategoryName"
                 />
               </div>

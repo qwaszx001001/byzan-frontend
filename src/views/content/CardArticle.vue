@@ -8,7 +8,8 @@ defineProps({
   },
   articleImages: {
     type: Array,
-    required: true,
+    required: false,
+    default: () => [],
   },
   displayCategoryName: {
     type: Function,
@@ -36,10 +37,12 @@ const starIconSrc = getAssetUrl("ae82f0fc275cc9614de9be18a7b57f7d24b16b0d.png");
     <div>
       <div class="relative h-52 overflow-hidden">
         <img
+          v-if="article.thumbnail || article.featured_image || article.image || articleImages[article.imageIndex || 0]"
           :src="article.thumbnail || article.featured_image || article.image || articleImages[article.imageIndex || 0]"
           :alt="article.title"
           class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
         />
+        <div v-else class="absolute inset-0 bg-gray-100"></div>
         <!-- subtle gradient for badge legibility -->
         <div class="absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-black/25 to-transparent"></div>
         <span

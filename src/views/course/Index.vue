@@ -11,7 +11,6 @@ import GetKitabPopup from '../../components/GetKitabPopup.vue'
 import RegisterModal from '../../components/RegisterModal.vue'
 import Login from '../auth/Login.vue'
 import api from '../../services/api'
-import { dummyCourses } from '../../data/dummyCourses.js'
 
 const auth = useAuthStore()
 const router = useRouter()
@@ -102,7 +101,7 @@ const fetchCourses = async () => {
     courses.value = list.map(mapApiCourseToCard)
   } catch (err) {
     coursesError.value = err.response?.data?.message || err.message
-    courses.value = dummyCourses
+    courses.value = []
   } finally {
     loadingCourses.value = false
   }
