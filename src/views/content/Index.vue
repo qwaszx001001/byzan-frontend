@@ -6,6 +6,7 @@ import AppHeader from '../../components/AppHeader.vue'
 import AppFooter from '../../components/AppFooter.vue'
 import CardArticle from './CardArticle.vue'
 import Pagination from '../../components/Pagination.vue'
+import ErrorState from '../../components/ErrorState.vue'
 import { getAssetUrl } from '../../utils/assets'
 import api from '../../services/api'
 
@@ -24,6 +25,7 @@ const selectedCategory = ref('all')
 const articles = ref([])
 const featuredArticle = ref(null)
 const loading = ref(false)
+const initialLoading = ref(true)
 const error = ref(null)
 const categories = ref([])
 const categoriesLoading = ref(false)
@@ -43,6 +45,7 @@ const sliderBgSrc = getAssetUrl('f41da2f037ead28fdc9275891ada165102d6b7c0.png')
 const sliderSeparatorSrc = getAssetUrl('320_110.svg')
 const sliderArrowSrc = getAssetUrl('92cf44ce2f6d38054670790ecb1f964b5e1c121d.png')
 const articlesBgSrc = getAssetUrl('1fc0d4fdf08dabc7e59b35987474afc4af53522b.png')
+const starIconSrc = getAssetUrl('ae82f0fc275cc9614de9be18a7b57f7d24b16b0d.png')
 
 const API_ORIGIN = (() => {
   try {
@@ -57,6 +60,19 @@ const normalizeMediaUrl = (url) => {
   const path = String(url)
   return path.startsWith('/') ? `${API_ORIGIN}${path}` : `${API_ORIGIN}/${path}`
 }
+
+// Sample article images
+const articleImages = [
+  getAssetUrl('ceca47a6478f603899f5b57003f9cb7368598bdd.png'),
+  getAssetUrl('47bd4e96a9df80ad012c840c37d54dfb2bd7c046.png'),
+  getAssetUrl('1eb5de3a3867ea93bd81861d06ccae3d18edf967.png'),
+  getAssetUrl('daeb9afe8aebd8556996bfa0833246d5028a91c4.png'),
+  getAssetUrl('fae23bb4188728f84d6eb8c1388ad51a8488ffac.png'),
+  getAssetUrl('6ae8f60de6196d73aa8e6441c6e3a837b224c3f5.png'),
+  getAssetUrl('e4a0fde3a8b6832804f26c192f6ec0fa5b9fdde0.png'),
+  getAssetUrl('dc8c70d864fbc639c57ce585213f123e7eb6c25c.jpeg'),
+  getAssetUrl('a28b322c5ab02c6290e1d019613d5afc85daf328.png'),
+]
 
 onMounted(async () => {
   try {
@@ -77,6 +93,10 @@ onMounted(async () => {
     articles.value = []
     featuredArticle.value = null
     categories.value = []
+  } finally {
+    setTimeout(() => {
+      initialLoading.value = false
+    }, 250)
   }
 })
 
@@ -87,7 +107,7 @@ const toDisplayDate = (iso) => {
   return d.toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })
 }
 
-const mapPostToCard = (p) => ({
+const mapPostToCard = (p, index) => ({
   id: p?.id,
   title: p?.title || '',
   excerpt: p?.excerpt || '',
@@ -96,7 +116,8 @@ const mapPostToCard = (p) => ({
   category: p?.category || null,
   date: toDisplayDate(p?.published_at || p?.created_at),
   comments: p?.comments_count || 0,
-  rating: p?.rating ?? p?.rating_avg ?? null,
+  rating: p?.rating || 4.8,
+  imageIndex: index % articleImages.length,
   contentType: 'post',
   slug: p?.slug || null,
 })
@@ -115,7 +136,7 @@ const fetchPosts = async () => {
     articles.value = list.map(mapPostToCard)
     featuredArticle.value = articles.value[0] || null
   } catch (e) {
-    error.value = e.response?.data?.message || e.message || 'Gagal memuat artikel'
+    error.value = e
     articles.value = []
     featuredArticle.value = null
   } finally {
@@ -146,6 +167,10 @@ const categoriesMapById = computed(() => {
   return map
 })
 
+const getCategorySlugById = (id) => {
+  return categoriesMapById.value[id]?.slug || ''
+}
+
 const displayCategoryName = (category) => {
   if (category && typeof category === 'object') {
     return category.name || 'Article'
@@ -157,6 +182,7 @@ const displayCategoryName = (category) => {
 }
 
 const filteredArticles = computed(() => articles.value)
+const filteredPosts = computed(() => [])
 
 const getCategoryColor = (category) => {
   let value = category
@@ -202,6 +228,42 @@ const updateItemsPerPage = (newItemsPerPage) => {
 
 <template>
   <div class="min-h-screen relative">
+
+    <!-- ===== Skeleton awal load: header + hero ===== -->
+    <transition name="skeleton-fade">
+      <div v-if="initialLoading" class="fixed inset-0 z-[9998] bg-white overflow-hidden" aria-hidden="true">
+        <!-- Header skeleton -->
+        <div class="h-20 px-4 md:px-9 flex items-center justify-between border-b border-gray-100">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 md:w-12 md:h-12 rounded-full shimmer"></div>
+            <div class="h-5 md:h-6 w-32 md:w-44 rounded shimmer"></div>
+          </div>
+          <div class="hidden md:flex items-center gap-6">
+            <div class="h-4 w-24 rounded shimmer"></div>
+            <div class="h-4 w-24 rounded shimmer"></div>
+            <div class="h-4 w-20 rounded shimmer"></div>
+            <div class="h-4 w-20 rounded shimmer"></div>
+          </div>
+          <div class="h-10 w-20 md:w-24 rounded-lg shimmer"></div>
+        </div>
+
+        <!-- Hero skeleton -->
+        <div class="pt-16 md:pt-24 px-4 max-w-[1440px] mx-auto">
+          <div class="flex items-center justify-center gap-4 md:gap-6 mb-6">
+            <div class="w-12 md:w-24 h-12 md:h-24 rounded-full shimmer"></div>
+            <div class="h-7 md:h-12 w-56 md:w-[520px] rounded shimmer"></div>
+          </div>
+          <div class="mx-auto max-w-3xl h-10 md:h-14 rounded-full shimmer mb-8"></div>
+          <div class="flex items-center justify-center gap-4 mb-6">
+            <div class="h-4 w-14 rounded shimmer"></div>
+            <div class="h-4 w-20 rounded shimmer"></div>
+            <div class="h-4 w-20 rounded shimmer"></div>
+          </div>
+          <div class="mx-auto max-w-[1100px] h-[240px] md:h-[420px] rounded-2xl shimmer"></div>
+        </div>
+      </div>
+    </transition>
+
     <AppHeader :is-authenticated="isAuthenticated" :user="auth.user" @logout="logout" />
 
     <section id="hero" class="relative pt-24 pb-16 text-center overflow-hidden">
@@ -243,19 +305,13 @@ const updateItemsPerPage = (newItemsPerPage) => {
           </template>
         </nav>
         <div v-if="categoriesLoading" class="text-center text-sm text-gray-600">Memuat kategori...</div>
-        <div v-if="error" class="text-center text-sm text-red-600">{{ error }}</div>
         <!-- <div v-if="categoriesError" class="text-center text-sm text-red-600">Terjadi kesalahan memuat kategori</div> -->
 
         <img :src="separatorSrc" alt="Separator" class="w-full max-w-full mt-4" />
 
         <div class="relative mt-4 mx-auto max-w-[1100px] rounded-2xl overflow-hidden shadow-lg flex items-center justify-start h-[340px] md:h-[460px]">
           <div v-if="loading" class="absolute inset-0 shimmer"></div>
-          <img
-            v-else
-            :src="featuredArticle?.thumbnail || sliderBgSrc"
-            alt="Featured article background"
-            class="absolute inset-0 w-full h-full object-cover"
-          />
+          <img v-else :src="sliderBgSrc" alt="Featured article background" class="absolute inset-0 w-full h-full object-cover" />
           <!-- Gradient scrim biar teks card kebaca & gambar lebih berdimensi -->
           <div class="absolute inset-0 bg-gradient-to-r from-black/50 via-black/10 to-transparent pointer-events-none"></div>
           <div v-if="loading" class="mx-8 md:mx-12 lg:mx-16 bg-white/90 backdrop-blur-md shadow-lg w-[85%] md:w-[45%] p-4 md:p-6 rounded-xl text-left z-10">
@@ -288,7 +344,15 @@ const updateItemsPerPage = (newItemsPerPage) => {
           <p class="text-base md:text-lg inline"> adalah fitur media publikasi dari ByzanEdu yang menyajikan berita, artikel, dan kajian ilmiah seputar dunia pendidikan, filsafat, ekonomi, budaya, dan keislaman. Melalui ByzanPost, pembaca dapat memperluas wawasan intelektual dan spiritual melalui tulisan-tulisan yang inspiratif, analitis, dan berbasis riset.</p>
         </div>
 
-        <div class="mb-6">
+        <!-- Error state -->
+        <ErrorState
+          v-if="error && !loading && paginatedContent.length === 0"
+          :error="error"
+          :loading="loading"
+          @retry="fetchPosts"
+        />
+
+        <div v-else class="mb-6">
           <!-- Loading skeleton -->
           <div v-if="loading" class="grid gap-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 mb-8">
             <div v-for="n in itemsPerPage" :key="`art-skel-${n}`" class="rounded-2xl overflow-hidden bg-white border border-gray-200">
@@ -311,6 +375,7 @@ const updateItemsPerPage = (newItemsPerPage) => {
               v-for="content in paginatedContent"
               :key="`${content.contentType}-${content.id}`"
               :article="content"
+              :article-images="articleImages"
               :display-category-name="displayCategoryName"
               :get-category-color="getCategoryColor"
               :is-post="content.contentType === 'post'"
@@ -340,6 +405,13 @@ const updateItemsPerPage = (newItemsPerPage) => {
 </template>
 
 <style scoped>
+.skeleton-fade-leave-active {
+  transition: opacity 0.4s ease;
+}
+.skeleton-fade-leave-to {
+  opacity: 0;
+}
+
 .shimmer {
   position: relative;
   overflow: hidden;
